@@ -3,21 +3,17 @@ import numpy as np
 import heapq
 import random
 
-def listToString(s):  
-    
-    # initialize an empty string 
-    str1 = ""  
-    
-    # traverse in the string   
-    for ele in s:  
-        str1 += str(ele)
-        str1 += " " 
-    
-    # return string   
-    return str1  
-        
 
-def delimiting(sigma):                                                              # Torna delimiters a partire da una sigma
+def listToString(s):
+
+    str1 = ""
+    for ele in s:
+        str1 += str(ele)
+        str1 += " "
+    return str1
+
+
+def delimiting(sigma):
     delimiters = [0]
     start = 0
     for route in sigma:
@@ -25,10 +21,11 @@ def delimiting(sigma):                                                          
         delimiters.append(start)
     return delimiters
 
-def shortestPath(edges, source, sink):                                              # Algoritmo di Dijkstra
+
+def shortestPath(edges, source, sink):
     graph = collections.defaultdict(list)
     for l, r, c in edges:
-        graph[l].append((c,r))
+        graph[l].append((c, r))
     queue, visited = [(0, source, [])], set()
     heapq.heapify(queue)
     while queue:
@@ -41,14 +38,12 @@ def shortestPath(edges, source, sink):                                          
             for c, neighbour in graph[node]:
                 if neighbour not in visited:
                     heapq.heappush(queue, (costo+c, neighbour, path))
-    return float("inf")   
+    return float("inf")
 
-
-
-def OXcrossover(sol1, sol2, p):                                                        # Crossover tra due soluzioni
+def OXcrossover(sol1, sol2, p):
     tour1 = sol1.GT[:]
     tour2 = sol2.GT[:]
-    
+
     son1 = list(np.zeros(p.n-1))
     son2 = list(np.zeros(p.n-1))
     start = 2
@@ -63,28 +58,32 @@ def OXcrossover(sol1, sol2, p):                                                 
     j = end + 1
     k = end + 1
     for i in range(end + 1, p.n + start - 1):
-        while tour2[j%(p.n-1)] in fixed1:
+        while tour2[j % (p.n-1)] in fixed1:
             j += 1
-        while tour1[k%(p.n-1)] in fixed2:
+        while tour1[k % (p.n-1)] in fixed2:
             k += 1
-        son1[i%(p.n-1)] = tour2[j%(p.n-1)]
-        son2[i%(p.n-1)] = tour1[k%(p.n-1)]
+        son1[i % (p.n-1)] = tour2[j % (p.n-1)]
+        son2[i % (p.n-1)] = tour1[k % (p.n-1)]
         j += 1
         k += 1
-    
-    if random.randint(0,1):
+
+    if random.randint(0, 1):
         return son1
     else:
         return son2
-    
+
+
 def takesimilarity(sol):
     return sol.sim
+
 
 def takefitness(sol):
     return sol.fitness
 
+
 def takecost(sol):
     return sol.costo
+
 
 def deduplicate(solutions):
     newsolutions = []
@@ -96,9 +95,10 @@ def deduplicate(solutions):
                 sol.costo = -2
         if not visited and sol.costo != -2:
             newsolutions.append(sol)
-    newsolutions.sort(key = takecost)
+    newsolutions.sort(key=takecost)
     return newsolutions
 
-def reverse_sublist(lst,start,end):
+
+def reverse_sublist(lst, start, end):
     lst[start:end] = lst[start:end][::-1]
     return lst

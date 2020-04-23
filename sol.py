@@ -6,24 +6,27 @@ import utils
 import evalutation
 from collections import Counter
 
+
 class solution:
     def __init__(self, grandTour, p):
         self.costo = -1
         self.feas = True
         self.GT = grandTour
         self.penality = p.omega
-        _, self.delimiters = split(grandTour, p, self.penality)      
-        self.sigma = routing(self.GT, self.delimiters, p, self.penality) 
+        _, self.delimiters = split(grandTour, p, self.penality)
+        self.sigma = routing(self.GT, self.delimiters, p, self.penality)
         self.nodeRoutes = ["depot"]
         self.sim = -1
         self.fitness = -1
-        self.myarcs = np.zeros((p.n, p.n), dtype = bool)
+        self.myarcs = np.zeros((p.n, p.n), dtype=bool)
         self.recomputenodes(p)
+
     def printsolution(self):
         print("Routes: ")
         for route in self.sigma:
             print(route.customer)
         print("Cost: ", self.costo)
+
     def printonfile(self, filename):
         myfile = open(filename, 'a')
         myfile.write("\nRoutes: ")
@@ -33,6 +36,7 @@ class solution:
         myfile.write("\nCost: ")
         myfile.write(str(self.costo))
         myfile.close()
+
     def recomputeparameters(self, p):
         gt = []
         totalcost = 0
@@ -51,17 +55,20 @@ class solution:
             _, self.delimiters = split(self.GT, p, self.penality)
             self.sigma = routing(self.GT, self.delimiters, p, self.penality)
         self.recomputenodes(p)
-    def delimiting(self):                                                              
+
+    def delimiting(self):
         self.delimiters = [0]
         start = 0
         for route in self.sigma:
             start += len(route.customer)
             self.delimiters.append(start)
+
     def recomputecost(self, p):
         tot = 0
         for route in self.sigma:
             tot += route.recomputecost(p, self.penality)
         self.costo = tot
+
     def recomputenodes(self, p):
         self.nodeRoutes = ["depot"]
         for node in range(1, p.n):
@@ -69,6 +76,7 @@ class solution:
                 for nodeS in route.customer:
                     if node == nodeS:
                         self.nodeRoutes.append(i)
+
     def recomputearcs(self, p):
         for route in self.sigma:
             for i in range(len(route.customer) - 1):
@@ -76,9 +84,9 @@ class solution:
                     self.myarcs[route.customer[i]][route.customer[i + 1]] = 1
                 else:
                     self.myarcs[route.customer[i + 1]][route.customer[i]] = 1
-    
-    def M1(self, p, c1, c1i, r1i, c2, c2i, r2i): # CROSS 1-0
-                    
+
+    def M1(self, p, c1, c1i, r1i, c2, c2i, r2i):  # CROSS 1-0
+
         # stessa route
         if r1i == r2i:
             if c1i == c2i + 1:
@@ -88,13 +96,13 @@ class solution:
                 seq2 = [self.sigma[r1i].subseq[c1i + 1][c2i]]
                 seq3 = [self.sigma[r1i].subseq[c1i][c1i]]
                 seq4 = [self.sigma[r1i].subseq[c2i + 1][-1]]
-                seq = seq1 + seq2 + seq3 + seq4 
+                seq = seq1 + seq2 + seq3 + seq4
             else:
                 seq1 = [self.sigma[r1i].subseq[0][c2i]]
                 seq2 = [self.sigma[r1i].subseq[c1i][c1i]]
                 seq3 = [self.sigma[r1i].subseq[c2i + 1][c1i - 1]]
                 seq4 = [self.sigma[r1i].subseq[c1i + 1][-1]]
-                seq = seq1 + seq2 + seq3 + seq4 
+                seq = seq1 + seq2 + seq3 + seq4
             newcost = evalN(p, seq, self.penality)
             if newcost < self.sigma[r1i].costo:
                 self.sigma[r1i].costo = newcost
@@ -106,7 +114,7 @@ class solution:
                 self.sigma[r1i].update_data(p, self.penality, -1)
                 return True
             return False
-       
+
         # route diverse
         r1seq1 = [self.sigma[r1i].subseq[0][c1i - 1]]
         r1seq2 = [self.sigma[r1i].subseq[c1i + 1][-1]]
@@ -122,18 +130,16 @@ class solution:
             del self.sigma[r1i].customer[c1i]
             self.sigma[r1i].update_data(p, self.penality, -1)
             self.sigma[r2i].update_data(p, self.penality, -1)
-            self.nodeRoutes[c1] = r2i 
+            self.nodeRoutes[c1] = r2i
             return True
         return False
-    
-    
-    def M2(self, p, c1, c1i, r1i, c2, c2i, r2i): # CROSS 2-0
-        
+
+    def M2(self, p, c1, c1i, r1i, c2, c2i, r2i):  # CROSS 2-0
+
         if c1i == len(self.sigma[r1i].customer) - 2:
             return False
-        
-        
-        # sessa route   
+
+        # sessa route
         if r1i == r2i:
             if c1i == c2i + 1:
                 return False
@@ -144,13 +150,13 @@ class solution:
                 seq2 = [self.sigma[r1i].subseq[c1i + 2][c2i]]
                 seq3 = [self.sigma[r1i].subseq[c1i][c1i + 1]]
                 seq4 = [self.sigma[r1i].subseq[c2i + 1][-1]]
-                seq = seq1 + seq2 + seq3 + seq4 
+                seq = seq1 + seq2 + seq3 + seq4
             else:
                 seq1 = [self.sigma[r1i].subseq[0][c2i]]
                 seq2 = [self.sigma[r1i].subseq[c1i][c1i + 1]]
                 seq3 = [self.sigma[r1i].subseq[c2i + 1][c1i - 1]]
                 seq4 = [self.sigma[r1i].subseq[c1i + 2][-1]]
-                seq = seq1 + seq2 + seq3 + seq4 
+                seq = seq1 + seq2 + seq3 + seq4
             newcost = evalN(p, seq, self.penality)
             if newcost < self.sigma[r1i].costo:
                 self.sigma[r1i].costo = newcost
@@ -166,7 +172,7 @@ class solution:
                 self.sigma[r1i].update_data(p, self.penality, -1)
                 return True
             return False
-                     
+
         # route diverse
         r1seq1 = [self.sigma[r1i].subseq[0][c1i - 1]]
         r1seq2 = [self.sigma[r1i].subseq[c1i + 2][-1]]
@@ -189,15 +195,13 @@ class solution:
             self.nodeRoutes[successor] = r2i
             return True
         return False
-        
-        
-    def M3(self, p, c1, c1i, r1i, c2, c2i, r2i): # I-CROSS 2-0
-        
+
+    def M3(self, p, c1, c1i, r1i, c2, c2i, r2i):  # I-CROSS 2-0
+
         if c1i == len(self.sigma[r1i].customer) - 2:
             return False
-        
-        
-        # sessa route   
+
+        # sessa route
         if r1i == r2i:
             if c1i == c2i + 1:
                 return False
@@ -208,13 +212,13 @@ class solution:
                 seq2 = [self.sigma[r1i].subseq[c1i + 2][c2i]]
                 seq3 = [self.sigma[r1i].subseq[c1i + 1][c1i]]
                 seq4 = [self.sigma[r1i].subseq[c2i + 1][-1]]
-                seq = seq1 + seq2 + seq3 + seq4 
+                seq = seq1 + seq2 + seq3 + seq4
             else:
                 seq1 = [self.sigma[r1i].subseq[0][c2i]]
                 seq2 = [self.sigma[r1i].subseq[c1i + 1][c1i]]
                 seq3 = [self.sigma[r1i].subseq[c2i + 1][c1i - 1]]
                 seq4 = [self.sigma[r1i].subseq[c1i + 2][-1]]
-                seq = seq1 + seq2 + seq3 + seq4 
+                seq = seq1 + seq2 + seq3 + seq4
             newcost = evalN(p, seq, self.penality)
             if newcost < self.sigma[r1i].costo:
                 self.sigma[r1i].costo = newcost
@@ -230,7 +234,7 @@ class solution:
                 self.sigma[r1i].update_data(p, self.penality, -1)
                 return True
             return False
-                     
+
         # route diverse
         r1seq1 = [self.sigma[r1i].subseq[0][c1i - 1]]
         r1seq2 = [self.sigma[r1i].subseq[c1i + 2][-1]]
@@ -253,15 +257,12 @@ class solution:
             self.nodeRoutes[successor] = r2i
             return True
         return False
-    
-    
-    
-    
-    def M4(self, p, c1, c1i, r1i, c2, c2i, r2i): # CROSS 1-1
-        
+
+    def M4(self, p, c1, c1i, r1i, c2, c2i, r2i):  # CROSS 1-1
+
         if c2 == 0:
             return False
-        
+
         # stessa route
         if r1i == r2i:
             reverse = False
@@ -291,7 +292,7 @@ class solution:
                 return True
             return False
 
-        # route diverse   
+        # route diverse
         r1seq1 = [self.sigma[r1i].subseq[0][c1i-1]]
         r1seq2 = [self.sigma[r2i].subseq[c2i][c2i]]
         r1seq3 = [self.sigma[r1i].subseq[c1i + 1][-1]]
@@ -311,12 +312,12 @@ class solution:
             self.nodeRoutes[c2] = r1i
             return True
         return False
-    
-    def M5(self, p, c1, c1i, r1i, c2, c2i, r2i): # CROSS 2-1
-        
+
+    def M5(self, p, c1, c1i, r1i, c2, c2i, r2i):  # CROSS 2-1
+
         if c1i == (len(self.sigma[r1i].customer) - 2) or c2 == 0:
             return False
-        
+
         # stessa route
         if r1i == r2i:
             if c2i == c1i + 1:
@@ -353,7 +354,7 @@ class solution:
                 self.sigma[r1i].update_data(p, self.penality, -1)
                 return True
             return False
-        
+
         # route diverse
         r1seq1 = [self.sigma[r1i].subseq[0][c1i - 1]]
         r1seq2 = [self.sigma[r2i].subseq[c2i][c2i]]
@@ -378,15 +379,15 @@ class solution:
             self.sigma[r2i].update_data(p, self.penality, -1)
             return True
         return False
-    
-    def M6(self, p, c1, c1i, r1i, c2, c2i, r2i): # CROSS 2-2
-        
+
+    def M6(self, p, c1, c1i, r1i, c2, c2i, r2i):  # CROSS 2-2
+
         if c2 == 0:
             return False
-        
+
         if c1i == (len(self.sigma[r1i].customer) - 2) or c2i == (len(self.sigma[r2i].customer) - 2):
             return False
-        
+
         # stessa route
         if r1i == r2i:
             if c1i + 1 == c2i:
@@ -425,8 +426,7 @@ class solution:
                 self.sigma[r1i].update_data(p, self.penality, -1)
                 return True
             return False
-        
-        
+
         # route diverse
         r1seq1 = [self.sigma[r1i].subseq[0][c1i - 1]]
         r1seq2 = [self.sigma[r2i].subseq[c2i][c2i + 1]]
@@ -453,14 +453,11 @@ class solution:
             self.sigma[r2i].update_data(p, self.penality, -1)
             return True
         return False
-        
-        
-    
-    
-    def M7(self, p, c1, c1i, r1i, c2, c2i, r2i): # 2-Opt
+
+    def M7(self, p, c1, c1i, r1i, c2, c2i, r2i):  # 2-Opt
         if c2 == 0:
             return False
-        
+
         # stessa route
         if r1i == r2i:
             if c1i > c2i:
@@ -477,18 +474,16 @@ class solution:
                 self.sigma[r1i].update_data(p, self.penality, -1)
                 return True
             return False
-        
+
         # route diverse
         return False
 
-        
-    def M8(self, p, c1, c1i, r1i, c2, c2i, r2i): # 2-Opt* alternativa
-    
-                
+    def M8(self, p, c1, c1i, r1i, c2, c2i, r2i):  # 2-Opt* alternativa
+
         # stessa route
         if r1i == r2i:
             return False
-        
+
         # route diverse
         r1seq1 = [self.sigma[r1i].subseq[0][c1i]]
         r1seq2 = [self.sigma[r2i].subseq[c2i][0]]
@@ -515,15 +510,13 @@ class solution:
             self.sigma[r2i].update_data(p, self.penality, -1)
             return True
         return False
-            
 
-    
-    def M9(self, p, c1, c1i, r1i, c2, c2i, r2i): # 2-Opt*
-        
+    def M9(self, p, c1, c1i, r1i, c2, c2i, r2i):  # 2-Opt*
+
         # stessa route
         if r1i == r2i:
             return False
-        
+
         # route diverse
         r1seq1 = [self.sigma[r1i].subseq[0][c1i]]
         r1seq2 = [self.sigma[r2i].subseq[c2i + 1][-1]]
@@ -548,12 +541,11 @@ class solution:
             self.sigma[r2i].update_data(p, self.penality, -1)
             return True
         return False
-    
-    
-        
+
     def educate(self, p):
         NB = p.neigh[:]
-        moves = [self.M1, self.M2, self.M3, self.M4, self.M5, self.M6, self.M7, self.M8, self.M9]
+        moves = [self.M1, self.M2, self.M3, self.M4,
+                 self.M5, self.M6, self.M7, self.M8, self.M9]
         while NB != []:
             pairindex = random.randint(0, len(NB) - 1)
             c1 = NB[pairindex][0]                           # Customer 1
@@ -567,7 +559,7 @@ class solution:
             else:
                 c2i = self.sigma[r2i].customer.index(c2)    # Customer 2 index
             random.shuffle(moves)
-            
+
             moved = False
             i = 0
             while (not moved) and i < len(moves):
@@ -577,14 +569,16 @@ class solution:
                 del NB[pairindex]
             else:
                 NB = p.neigh[:]
-        self.sigma = [x for x in self.sigma if x.customer != [0,0]]
+        self.sigma = [x for x in self.sigma if x.customer != [0, 0]]
         self.recomputearcs(p)
         self.recomputeparameters(p)
-        
+
+
 class Route:
     def __init__(self, nodes, p, penality):
         self.customer = [0] + nodes + [0]
         self.recomputecost(p, penality)
+
     def recomputecost(self, p, penality):
         try:
             self.update_data(p, penality, -1)
@@ -599,6 +593,7 @@ class Route:
         except:
             self.costo = 0
             self.feas = True
+
     def update_data(self, p, penality, update):
         if update == -1:
             mat_dim = len(self.customer)
@@ -608,22 +603,26 @@ class Route:
                 sub_carico = 0
                 sub_costo = 0
                 for j in range(i):
-                    self.subseq[i].append(seqdata(self.subseq[j][i].costo, self.subseq[j][i].carico, self.subseq[j][i].end, self.subseq[j][i].start))
+                    self.subseq[i].append(seqdata(
+                        self.subseq[j][i].costo, self.subseq[j][i].carico, self.subseq[j][i].end, self.subseq[j][i].start))
                 for j in range(i, mat_dim):
                     sub_carico += p.demand[self.customer[j]]
                     if i != j:
-                        sub_costo += p.dist[self.customer[j-1]][self.customer[j]]                   
-                    self.subseq[i].append(seqdata(sub_costo, sub_carico, self.customer[i], self.customer[j]))
-            
-            
+                        sub_costo += p.dist[self.customer[j-1]
+                                            ][self.customer[j]]
+                    self.subseq[i].append(
+                        seqdata(sub_costo, sub_carico, self.customer[i], self.customer[j]))
+
+
 class seqdata:
     def __init__(self, costo, carico, start, end):
-            self.costo = costo
-            self.carico = carico
-            self.start = start
-            self.end = end
-    
-def routing(grandTour, delimiters, p, penality):                                          # Torna una sigma da un grand tour e dei delimiters
+        self.costo = costo
+        self.carico = carico
+        self.start = start
+        self.end = end
+
+
+def routing(grandTour, delimiters, p, penality):
     sigma = []
     tour = grandTour[:]
     route = []
@@ -637,10 +636,11 @@ def routing(grandTour, delimiters, p, penality):                                
         route = []
     return sigma
 
-def split(grandTour, p, penality):                                                        # Calcola i trip delimiters
+
+def split(grandTour, p, penality):
     route = grandTour[:]
-    route.insert(0,0)
-    edges = []    
+    route.insert(0, 0)
+    edges = []
     for i in range(len(route)):
         seqdata = [0]
         for j in range(i+1, len(route)):
@@ -651,9 +651,10 @@ def split(grandTour, p, penality):                                              
             if feasible:
                 edges.append((i, j, costo))
             else:
-                break   
-    costo, delimiters = utils.shortestPath(edges, 0, len(route) - 1)        
+                break
+    costo, delimiters = utils.shortestPath(edges, 0, len(route) - 1)
     return costo, delimiters
+
 
 def evalN(p, seq, penality):
     carico = 0
@@ -668,4 +669,3 @@ def evalN(p, seq, penality):
     loadexcess = max(0, carico - p.C)
     costo += loadexcess*penality
     return costo
-            
